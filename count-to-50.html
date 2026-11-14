@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Count to 50</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E8F4FF; --ink:#1D2B4F; --soft:#5B6A8F; --panel:#FFFFFF; --empty:#D3E3F5;
+  --r1:#FF5A5F; --r2:#FF9F1C; --r3:#F7C531; --r4:#2EC4B6; --r5:#5B7CFA;
+  --btn:#1D2B4F; --btnInk:#FFFFFF;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12193A; --ink:#F2F5FF; --soft:#A9B4D6; --panel:#1C2550; --empty:#2A3566;
+    --btn:#F7C531; --btnInk:#12193A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12193A; --ink:#F2F5FF; --soft:#A9B4D6; --panel:#1C2550; --empty:#2A3566;
+  --btn:#F7C531; --btnInk:#12193A; color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;
+  touch-action:manipulation; overflow-x:hidden;
+}
+main{
+  max-width:640px; margin:0 auto; min-height:100%;
+  display:flex; flex-direction:column; gap:14px; padding:14px 14px 18px;
+}
+.themes{display:flex; justify-content:center; gap:8px; flex-wrap:wrap}
+.themes button{
+  font-size:26px; width:52px; height:52px; border-radius:50%;
+  border:3px solid transparent; background:var(--panel); cursor:pointer; line-height:1;
+}
+.themes button[aria-pressed="true"]{border-color:var(--ink)}
+.display{text-align:center; line-height:.9}
+#num{
+  font-size:clamp(110px,32vw,190px); font-weight:800; display:inline-block;
+  color:var(--ink); transition:color .2s;
+}
+#num.pop{animation:pop .35s ease-out}
+@keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+#word{font-size:22px; font-weight:600; color:var(--soft); min-height:30px; margin-top:4px}
+.board{
+  background:var(--panel); border-radius:22px; padding:10px;
+  display:grid; grid-template-rows:repeat(5,1fr); gap:6px; cursor:pointer;
+}
+.row{display:grid; grid-template-columns:repeat(10,1fr); gap:4px; border-radius:12px; padding:2px}
+.row.flash{animation:flash .9s ease-out}
+@keyframes flash{0%,100%{background:transparent}30%{background:var(--rc)}}
+.cell{
+  aspect-ratio:1; border-radius:50%; background:var(--empty);
+  display:flex; align-items:center; justify-content:center;
+  font-size:clamp(16px,5vw,30px); line-height:1;
+}
+.cell.on{background:var(--rc); animation:drop .3s ease-out}
+@keyframes drop{0%{transform:scale(0)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
+#go,#hear{
+  font-family:inherit; font-size:34px; font-weight:800;
+  background:var(--btn); color:var(--btnInk); border:none; border-radius:999px;
+  padding:18px 20px; cursor:pointer; box-shadow:0 6px 0 var(--r5);
+}
+#go:active,#hear:active{transform:translateY(4px); box-shadow:0 2px 0 var(--r5)}
+.small{display:flex; justify-content:space-between; gap:10px}
+.small button{
+  font-family:inherit; font-size:18px; font-weight:600; flex:1;
+  background:transparent; color:var(--soft); border:2px solid var(--empty);
+  border-radius:999px; padding:10px; cursor:pointer;
+}
+button:focus-visible{outline:4px solid var(--r4); outline-offset:3px}
+[hidden]{display:none!important}
+#go{font-size:clamp(44px,12vw,60px); padding:36px 20px; box-shadow:0 8px 0 var(--r5)}
+.top{display:flex; justify-content:center; gap:10px; flex-wrap:wrap}
+#countCtrls,#guessCtrls{display:flex; flex-direction:column; gap:14px}
+.mode{display:flex; gap:6px; background:var(--panel); border-radius:999px; padding:5px; align-self:center}
+.mode button{
+  font-family:inherit; font-size:20px; font-weight:700; border:none; background:transparent;
+  color:var(--soft); padding:8px 22px; border-radius:999px; cursor:pointer;
+}
+.mode button[aria-pressed="true"]{background:var(--btn); color:var(--btnInk)}
+.choices{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+.choices button{
+  font-family:inherit; font-size:46px; font-weight:800; border:none; border-radius:24px;
+  padding:8px 0; cursor:pointer; color:#1D2B4F; background:var(--r3); box-shadow:0 6px 0 var(--r2);
+}
+.choices button:nth-child(2){background:var(--r4); box-shadow:0 6px 0 var(--r5)}
+.choices button:nth-child(3){background:var(--r1); color:#fff; box-shadow:0 6px 0 #B83A3F}
+.choices button:active{transform:translateY(4px); box-shadow:none}
+.choices button.wrong{opacity:.25; animation:shake .4s}
+.choices button.right{outline:5px solid var(--ink); outline-offset:3px}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+#next{
+  font-family:inherit; font-size:22px; font-weight:700; background:transparent; color:var(--soft);
+  border:2px solid var(--empty); border-radius:999px; padding:12px; cursor:pointer;
+}
+#win{
+  position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+  flex-direction:column; gap:20px; background:color-mix(in srgb,var(--bg) 88%,transparent);
+  text-align:center; padding:24px; z-index:5;
+}
+#win.show{display:flex}
+#win h2{font-size:clamp(40px,11vw,72px); margin:0; line-height:1}
+#win p{font-size:26px; margin:0}
+#confetti{position:fixed; inset:0; pointer-events:none; z-index:6}
+@media (prefers-reduced-motion: reduce){
+  #num.pop,.cell.on,.row.flash{animation:none}
+}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div class="mode" role="group" aria-label="Game mode" hidden>
+      <button data-mode="count" data-t="count" aria-pressed="true">Count</button>
+      <button data-mode="guess" data-t="guess" aria-pressed="false">Guess</button>
+    </div>
+    <div class="mode" role="group" aria-label="Language">
+      <button data-lang="en" aria-pressed="true">English</button>
+      <button data-lang="ru" aria-pressed="false">Русский</button>
+    </div>
+  </div>
+  <div class="themes" id="themes" aria-label="Pick what to count"></div>
+  <div class="display">
+    <div id="num" aria-live="polite">0</div>
+    <div id="word">Tap to start counting</div>
+  </div>
+  <div class="board" id="board" aria-label="Counting board, tap to add one"></div>
+  <div id="countCtrls">
+    <button id="go" data-t="go">Count one more</button>
+    <div class="small">
+      <button id="back" data-t="back">Take one away</button>
+      <button id="reset" data-t="reset">Start over</button>
+    </div>
+  </div>
+  <div id="guessCtrls" hidden>
+    <button id="hear" data-t="hear">Hear it</button>
+    <button id="next" data-t="next">Next number</button>
+  </div>
+</main>
+
+<div id="win" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+  <h2 id="winTitle" data-t="winTitle">Fifty!</h2>
+  <p data-t="winText">You counted all the way to 50.</p>
+  <button id="again" style="font-family:inherit;font-size:30px;font-weight:800;background:var(--btn);color:var(--btnInk);border:none;border-radius:999px;padding:16px 34px;cursor:pointer" data-t="again">Count again</button>
+</div>
+<canvas id="confetti"></canvas>
+
+<script>
+const THEMES = ["🍎","🐶","⭐","🚚","🦆","🐟"];
+const ROWCOLORS = ["--r1","--r2","--r3","--r4","--r5"];
+const ones = ["zero","one","two","three","four","five","six","seven","eight","nine","ten",
+  "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
+const tens = ["","","twenty","thirty","forty","fifty"];
+const onesRu = ["ноль","один","два","три","четыре","пять","шесть","семь","восемь","девять","десять",
+  "одиннадцать","двенадцать","тринадцать","четырнадцать","пятнадцать","шестнадцать","семнадцать","восемнадцать","девятнадцать"];
+const tensRu = ["","","двадцать","тридцать","сорок","пятьдесят"];
+const T = {
+  en:{count:"Count",guess:"Guess",go:"Count one more",back:"Take one away",reset:"Start over",
+      hear:"Hear it",next:"Next number",winTitle:"Fifty!",winText:"You counted all the way to 50.",
+      again:"Count again",tapStart:"Tap to start counting",sayIt:"Can you say this number?",done:"Fifty! You did it!"},
+  ru:{count:"Считать",guess:"Назови",go:"Ещё один",back:"Убрать один",reset:"Сначала",
+      hear:"Послушать",next:"Следующее число",winTitle:"Пятьдесят!",winText:"Ты досчитал до 50!",
+      again:"Ещё раз",tapStart:"Нажми, чтобы считать",sayIt:"Как называется это число?",done:"Пятьдесят! Молодец!"}
+};
+let lang = "en";
+try { const s = localStorage.getItem("count50-lang"); if (s === "en" || s === "ru") lang = s; } catch(e){}
+function words(n){
+  const O = lang === "ru" ? onesRu : ones, X = lang === "ru" ? tensRu : tens;
+  if(n<20) return O[n];
+  const t=Math.floor(n/10), o=n%10;
+  return o ? X[t] + (lang === "ru" ? " " : "-") + O[o] : X[t];
+}
+
+let count = 0;
+let theme = "🍎";
+try { const s = localStorage.getItem("count50-theme"); if (s && THEMES.includes(s)) theme = s; } catch(e){}
+
+const board = document.getElementById("board");
+const numEl = document.getElementById("num");
+const wordEl = document.getElementById("word");
+const cells = [], rows = [];
+
+for (let r=0; r<5; r++){
+  const row = document.createElement("div");
+  row.className = "row";
+  row.style.setProperty("--rc", `var(${ROWCOLORS[r]})`);
+  for (let c=0; c<10; c++){
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    row.appendChild(cell); cells.push(cell);
+  }
+  board.appendChild(row); rows.push(row);
+}
+
+const themesEl = document.getElementById("themes");
+THEMES.forEach(t=>{
+  const b = document.createElement("button");
+  b.textContent = t;
+  b.setAttribute("aria-label","Count "+t);
+  b.onclick = ()=>{ theme=t; try{localStorage.setItem("count50-theme",t)}catch(e){}; render(false); };
+  themesEl.appendChild(b);
+});
+
+function say(text){
+  try{
+    if(!("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang === "ru" ? "ru-RU" : "en-US";
+    const v = speechSynthesis.getVoices().find(v => v.lang && v.lang.toLowerCase().startsWith(lang));
+    if (v) u.voice = v;
+    u.rate = 0.85; u.pitch = 1.2;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function render(animateLast){
+  cells.forEach((cell,i)=>{
+    const on = i < count;
+    if (on && !cell.classList.contains("on")) {
+      cell.classList.add("on");
+      if (!animateLast || i !== count-1) cell.style.animation = "none"; else cell.style.animation = "";
+    }
+    if (!on) cell.classList.remove("on");
+    cell.textContent = on ? theme : "";
+  });
+  [...themesEl.children].forEach(b=>b.setAttribute("aria-pressed", b.textContent===theme));
+  if (mode === "guess" && !solved){
+    numEl.textContent = answer;
+    numEl.style.color = `var(${ROWCOLORS[Math.ceil(answer/10)-1]})`;
+    wordEl.textContent = T[lang].sayIt;
+    return;
+  }
+  numEl.textContent = count;
+  const rowIdx = Math.max(0, Math.ceil(count/10)-1);
+  numEl.style.color = count ? `var(${ROWCOLORS[rowIdx]})` : "var(--ink)";
+  wordEl.textContent = count ? words(count) : T[lang].tapStart;
+}
+
+function bump(){ numEl.classList.remove("pop"); void numEl.offsetWidth; numEl.classList.add("pop"); }
+
+function add(){
+  if (mode !== "count" || count >= 50) return;
+  count++;
+  render(true); bump();
+  if (count % 10 === 0){
+    const row = rows[count/10 - 1];
+    row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash");
+  }
+  if (count === 50){
+    say(T[lang].done);
+    setTimeout(()=>{ document.getElementById("win").classList.add("show"); confetti(); }, 600);
+  } else {
+    say(words(count) + (count % 10 === 0 ? "!" : ""));
+  }
+}
+function back(){ if(mode==="count" && count>0){ count--; render(false); bump(); if(count) say(words(count)); } }
+function reset(){
+  count = 0;
+  document.getElementById("win").classList.remove("show");
+  stopConfetti(); render(false);
+}
+
+board.addEventListener("click", add);
+document.getElementById("go").addEventListener("click", add);
+document.getElementById("back").addEventListener("click", back);
+document.getElementById("reset").addEventListener("click", reset);
+document.getElementById("again").addEventListener("click", reset);
+document.addEventListener("keydown", e=>{
+  if (e.target.tagName === "BUTTON") return;
+  if (e.key===" "||e.key==="Enter"||e.key==="ArrowRight"){ e.preventDefault(); add(); }
+  if (e.key==="Backspace"||e.key==="ArrowLeft"){ e.preventDefault(); back(); }
+});
+
+/* Guess mode */
+let mode = "count", answer = 0, solved = false;
+const modeBtns = document.querySelectorAll("[data-mode]");
+
+function setMode(m){
+  mode = m;
+  modeBtns.forEach(b=>b.setAttribute("aria-pressed", b.dataset.mode===m));
+  document.getElementById("countCtrls").hidden = m !== "count";
+  document.getElementById("guessCtrls").hidden = m !== "guess";
+  if (m === "count") reset(); else newPuzzle();
+}
+modeBtns.forEach(b=>b.addEventListener("click", ()=>setMode(b.dataset.mode)));
+
+function newPuzzle(){
+  stopConfetti();
+  solved = false;
+  let n;
+  do { n = 1 + Math.floor(Math.random()*50); } while (n === answer);
+  answer = n;
+  count = 0;
+  render(false); bump();
+}
+
+function reveal(){
+  if (solved){ say(words(answer)); return; }
+  solved = true;
+  count = answer;
+  render(false);
+  cells.forEach((c,i)=>{ if(i<count) c.style.animation = ""; });
+  bump();
+  say(words(answer) + "!");
+  confetti();
+}
+document.getElementById("hear").addEventListener("click", reveal);
+document.getElementById("next").addEventListener("click", newPuzzle);
+
+/* Language */
+const langBtns = document.querySelectorAll("[data-lang]");
+function applyLang(){
+  document.documentElement.lang = lang;
+  langBtns.forEach(b=>b.setAttribute("aria-pressed", b.dataset.lang === lang));
+  document.querySelectorAll("[data-t]").forEach(el=>{ el.textContent = T[lang][el.dataset.t]; });
+  render(false);
+}
+langBtns.forEach(b=>b.addEventListener("click", ()=>{
+  lang = b.dataset.lang;
+  try { localStorage.setItem("count50-lang", lang); } catch(e){}
+  applyLang();
+  if (count) say(words(count));
+}));
+applyLang();
+
+/* Confetti */
+const cv = document.getElementById("confetti"), ctx = cv.getContext("2d");
+let parts = [], raf = null;
+function confetti(){
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  cv.width = innerWidth; cv.height = innerHeight;
+  const cs = getComputedStyle(document.documentElement);
+  const colors = ROWCOLORS.map(v=>cs.getPropertyValue(v).trim());
+  parts = Array.from({length:160},()=>({
+    x:Math.random()*cv.width, y:-20-Math.random()*cv.height*0.5,
+    vx:(Math.random()-.5)*3, vy:2+Math.random()*4, s:6+Math.random()*8,
+    r:Math.random()*6, vr:(Math.random()-.5)*.3, c:colors[Math.floor(Math.random()*colors.length)]
+  }));
+  const tick = ()=>{
+    ctx.clearRect(0,0,cv.width,cv.height);
+    let alive = false;
+    parts.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.r+=p.vr;
+      if (p.y < cv.height+20) alive = true;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
+      ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2); ctx.restore();
+    });
+    raf = alive ? requestAnimationFrame(tick) : null;
+  };
+  tick();
+}
+function stopConfetti(){ if(raf) cancelAnimationFrame(raf); raf=null; ctx.clearRect(0,0,cv.width,cv.height); }
+
+render(false);
+</script>
+</body>
+</html>
