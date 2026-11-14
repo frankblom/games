@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Shapes">
+<title>Match the Shapes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FFF4E4; --ink:#2B2140; --soft:#6E6385; --panel:#FFFFFF; --ghost:#EDE3D3; --ghostLine:#B9AC98;
+  --c1:#FF5A5F; --c2:#FF9F1C; --c3:#F7C531; --c4:#2EC4B6; --c5:#5B7CFA; --c6:#B565E8;
+  --btn:#2B2140; --btnInk:#FFFFFF;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1A1530; --ink:#F6F2FF; --soft:#B3A9CC; --panel:#262043; --ghost:#332B57; --ghostLine:#7C70A3;
+    --btn:#F7C531; --btnInk:#1A1530; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1A1530; --ink:#F6F2FF; --soft:#B3A9CC; --panel:#262043; --ghost:#332B57; --ghostLine:#7C70A3;
+  --btn:#F7C531; --btnInk:#1A1530; color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Baloo 2","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;
+  touch-action:manipulation; overflow-x:hidden;
+}
+main{
+  max-width:720px; margin:0 auto; height:100%;
+  display:flex; flex-direction:column; gap:16px; padding:14px 16px 20px;
+}
+.top{display:flex; justify-content:space-between; align-items:center; gap:10px}
+.stars{font-size:24px; min-height:32px; letter-spacing:2px; overflow:hidden; white-space:nowrap}
+.lang{display:flex; gap:4px; background:var(--panel); border-radius:999px; padding:5px; flex-shrink:0}
+.lang button{
+  font-family:inherit; font-size:18px; font-weight:700; border:none; background:transparent;
+  color:var(--soft); padding:6px 16px; border-radius:999px; cursor:pointer;
+}
+.lang button[aria-pressed="true"]{background:var(--btn); color:var(--btnInk)}
+.target{
+  flex:1 1 auto; min-height:0; background:var(--panel); border-radius:32px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:16px;
+}
+.target svg{width:min(56vw,32vh,300px); height:auto; overflow:visible}
+.target svg.pop{animation:pop .45s ease-out}
+@keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+#prompt{font-size:clamp(22px,6vw,32px); font-weight:700; text-align:center; min-height:44px}
+.options{display:grid; grid-template-columns:repeat(3,1fr); gap:14px}
+.options button{
+  background:var(--panel); border:none; border-radius:28px; padding:14px; cursor:pointer;
+  height:min(24vh,28vw,200px); display:flex; align-items:center; justify-content:center;
+  box-shadow:0 6px 0 var(--ghost);
+}
+.options button:active{transform:translateY(4px); box-shadow:0 2px 0 var(--ghost)}
+.options svg{width:100%; height:100%; overflow:visible}
+.options button.wrong{animation:shake .45s}
+.options button.gone{opacity:.15; pointer-events:none}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+button:focus-visible{outline:4px solid var(--c4); outline-offset:3px}
+#start{
+  position:fixed; inset:0; z-index:5; background:var(--bg);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; padding:24px;
+}
+#start[hidden]{display:none}
+#start h1{font-size:clamp(40px,11vw,68px); margin:0; line-height:1; text-align:center}
+#play{
+  font-family:inherit; font-size:40px; font-weight:800; background:var(--btn); color:var(--btnInk);
+  border:none; border-radius:999px; padding:22px 60px; cursor:pointer; box-shadow:0 8px 0 var(--c5);
+}
+#play:active{transform:translateY(5px); box-shadow:0 3px 0 var(--c5)}
+.demo{display:flex; gap:12px}
+.demo svg{width:56px; height:56px}
+#treasure{
+  position:fixed; inset:0; z-index:5; background:var(--bg);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+  padding:calc(20px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));
+}
+#treasure[hidden],#restart[hidden]{display:none}
+#tTitle{font-size:clamp(28px,8vw,48px); font-weight:800; text-align:center; line-height:1.05}
+.dots{display:flex; gap:14px}
+.dots span{width:26px; height:26px; border-radius:50%; background:var(--ghost); border:3px solid var(--ghostLine); transition:transform .2s}
+.dots span.on{background:var(--c3); border-color:var(--c2); transform:scale(1.25)}
+#chest{
+  --amp:4; position:relative; background:none; border:none; padding:0; cursor:pointer;
+  width:min(74vw,44vh,360px); box-shadow:none;
+}
+#chest svg{width:100%; height:auto; overflow:visible; display:block}
+#chest:not(.open):not(.shaking){animation:bob 1.6s ease-in-out infinite}
+#chest.shaking{animation:chestShake .55s ease-out}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes chestShake{
+  0%,100%{transform:rotate(0) scale(1)}
+  12%{transform:rotate(calc(var(--amp) * -1deg)) scale(1.08)}
+  28%{transform:rotate(calc(var(--amp) * 1deg)) scale(1.08)}
+  44%{transform:rotate(calc(var(--amp) * -0.7deg)) scale(1.05)}
+  60%{transform:rotate(calc(var(--amp) * 0.5deg)) scale(1.03)}
+  78%{transform:rotate(calc(var(--amp) * -0.25deg))}
+}
+#lid{transform-box:fill-box; transform-origin:50% 100%; transition:transform .6s cubic-bezier(.2,1.7,.4,1)}
+#chest.peek #lid{animation:lidHop .4s ease-out}
+@keyframes lidHop{0%,100%{transform:none}35%{transform:translateY(-14px) rotate(-4deg)}}
+#chest.open #lid{transform:translateY(-46px) rotate(-16deg)}
+#glow{opacity:0; transition:opacity .5s}
+#chest.peek #glow{animation:flicker .4s}
+#chest.open #glow{opacity:1}
+@keyframes flicker{40%{opacity:.6}100%{opacity:0}}
+#coins{position:absolute; left:50%; top:48%; width:0; height:0; pointer-events:none}
+.coin{
+  position:absolute; left:-18px; top:-18px; width:36px; height:36px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#FFF6C2,#F7C531 45%,#D99A00);
+  border:3px solid #B8860B; box-shadow:0 2px 0 rgba(0,0,0,.2);
+}
+#restart{
+  font-family:inherit; font-size:36px; font-weight:800; background:var(--btn); color:var(--btnInk);
+  border:none; border-radius:999px; padding:18px 48px; cursor:pointer; box-shadow:0 8px 0 var(--c5);
+  animation:pop .45s ease-out;
+}
+#restart:active{transform:translateY(5px); box-shadow:0 3px 0 var(--c5)}
+#confetti{position:fixed; inset:0; pointer-events:none; z-index:6}
+@media (prefers-reduced-motion: reduce){
+  .target svg.pop,.options button.wrong{animation:none}
+}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div class="stars" id="stars" aria-label="Stars earned"></div>
+    <div class="lang" role="group" aria-label="Language">
+      <button data-lang="en" aria-pressed="true">English</button>
+      <button data-lang="ru" aria-pressed="false">Русский</button>
+    </div>
+  </div>
+  <div class="target">
+    <div id="targetShape"></div>
+    <div id="prompt" aria-live="polite"></div>
+  </div>
+  <div class="options" id="options"></div>
+</main>
+
+<div id="start">
+  <div class="demo" id="demo"></div>
+  <h1 id="startTitle">Match the Shapes</h1>
+  <button id="play" aria-label="Play">▶</button>
+</div>
+<div id="treasure" hidden>
+  <div id="tTitle"></div>
+  <div class="dots" id="dots"><span></span><span></span><span></span></div>
+  <button id="chest" aria-label="Treasure chest">
+    <svg viewBox="0 0 200 180" aria-hidden="true">
+      <defs>
+        <radialGradient id="glowG"><stop offset="0" stop-color="#FFE680"/><stop offset="1" stop-color="#FFE680" stop-opacity="0"/></radialGradient>
+      </defs>
+      <circle id="glow" cx="100" cy="80" r="100" fill="url(#glowG)"/>
+      <g id="base">
+        <rect x="18" y="84" width="164" height="86" rx="10" fill="#9C5A2B" stroke="#5E3416" stroke-width="4"/>
+        <rect x="20" y="86" width="160" height="12" fill="#7A431D"/>
+        <rect x="38" y="84" width="16" height="86" fill="#F2B632" stroke="#B8860B" stroke-width="2"/>
+        <rect x="146" y="84" width="16" height="86" fill="#F2B632" stroke="#B8860B" stroke-width="2"/>
+        <rect x="82" y="90" width="36" height="40" rx="6" fill="#F7C531" stroke="#B8860B" stroke-width="3"/>
+        <circle cx="100" cy="105" r="5" fill="#5E3416"/>
+        <rect x="98" y="107" width="4" height="13" rx="2" fill="#5E3416"/>
+      </g>
+      <g id="lid">
+        <path d="M18 88 L18 62 Q18 22 100 22 Q182 22 182 62 L182 88 Z" fill="#B0682F" stroke="#5E3416" stroke-width="4" stroke-linejoin="round"/>
+        <rect x="38" y="30" width="16" height="58" fill="#F2B632" stroke="#B8860B" stroke-width="2"/>
+        <rect x="146" y="30" width="16" height="58" fill="#F2B632" stroke="#B8860B" stroke-width="2"/>
+        <rect x="86" y="70" width="28" height="20" rx="5" fill="#F7C531" stroke="#B8860B" stroke-width="3"/>
+      </g>
+    </svg>
+    <div id="coins"></div>
+  </button>
+  <button id="restart" hidden></button>
+</div>
+<canvas id="confetti"></canvas>
+
+<script>
+const COLORS = ["--c1","--c2","--c3","--c4","--c5","--c6"];
+function starPts(){
+  const p=[]; for(let i=0;i<10;i++){
+    const r = i%2 ? 20 : 47, a = -Math.PI/2 + i*Math.PI/5;
+    p.push((50+r*Math.cos(a)).toFixed(1)+","+(53+r*Math.sin(a)).toFixed(1));
+  } return p.join(" ");
+}
+const SHAPES = {
+  circle:   {en:"circle",    ru:"круг",          d:'<circle cx="50" cy="50" r="44"/>'},
+  square:   {en:"square",    ru:"квадрат",       d:'<rect x="8" y="8" width="84" height="84" rx="6"/>'},
+  triangle: {en:"triangle",  ru:"треугольник",   d:'<polygon points="50,6 95,90 5,90" stroke-linejoin="round"/>'},
+  star:     {en:"star",      ru:"звезда",        d:`<polygon points="${starPts()}" stroke-linejoin="round"/>`},
+  heart:    {en:"heart",     ru:"сердце",        d:'<path d="M50 90 C20 68 5 50 5 32 C5 17 17 7 30 7 C40 7 47 13 50 21 C53 13 60 7 70 7 C83 7 95 17 95 32 C95 50 80 68 50 90 Z"/>'},
+  diamond:  {en:"diamond",   ru:"ромб",          d:'<polygon points="50,3 90,50 50,97 10,50" stroke-linejoin="round"/>'},
+  oval:     {en:"oval",      ru:"овал",          d:'<ellipse cx="50" cy="50" rx="46" ry="29"/>'},
+  rectangle:{en:"rectangle", ru:"прямоугольник", d:'<rect x="3" y="22" width="94" height="56" rx="5"/>'},
+  arrow:    {en:"arrow",     ru:"стрелка",       d:'<polygon points="4,36 54,36 54,10 96,50 54,90 54,64 4,64" stroke-linejoin="round"/>'},
+  parallelogram:{en:"parallelogram", ru:"параллелограмм", d:'<polygon points="30,20 97,20 70,80 3,80" stroke-linejoin="round"/>'},
+  crescent: {en:"crescent",  ru:"полумесяц",     d:'<path d="M76 8 A44 44 0 1 0 76 92 A48 48 0 0 1 76 8 Z"/>'},
+  cross:    {en:"cross",     ru:"крест",         d:'<polygon points="36,5 64,5 64,36 95,36 95,64 64,64 64,95 36,95 36,64 5,64 5,36 36,36" stroke-linejoin="round"/>'},
+  semicircle:{en:"semicircle", ru:"полукруг", d:'<path d="M4 73 A46 46 0 0 1 96 73 Z" stroke-linejoin="round"/>'}
+};
+const KEYS = Object.keys(SHAPES);
+
+const T = {
+  en:{chestTitle:"Tap the chest 3 times!", chestSay:"You found a treasure chest! Tap it three times!",
+      count:["One!","Two!"], treasure:"Treasure! You did it!", treasureTitle:"Treasure!", restart:"Restart",
+      title:"Match the Shapes", find:"Find the same shape!", yes:s=>`Yes! ${art(s)} ${s}!`,
+      no:s=>`That's ${art(s).toLowerCase()} ${s}. Try again!`, prompt:"Which one matches?"},
+  ru:{chestTitle:"Нажми на сундук 3 раза!", chestSay:"Ты нашёл сундук с сокровищами! Нажми три раза!",
+      count:["Раз!","Два!"], treasure:"Сокровище! Молодец!", treasureTitle:"Сокровище!", restart:"Заново",
+      title:"Найди фигуру", find:"Найди такую же!", yes:s=>`Да! ${cap(s)}!`,
+      no:s=>`Это ${s}. Попробуй ещё!`, prompt:"Какая подходит?"}
+};
+function cap(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function art(s){ return /^[aeiou]/.test(s) ? "An" : "A"; }
+
+let lang = "en";
+try { const s = localStorage.getItem("shapes-lang"); if (s==="en"||s==="ru") lang = s; } catch(e){}
+
+function svg(key, fill, opts={}){
+  const ghost = opts.ghost;
+  const style = ghost
+    ? `fill="var(--ghost)" stroke="var(--ghostLine)" stroke-width="3" stroke-dasharray="7 6"`
+    : `fill="${fill}" stroke="rgba(0,0,0,.12)" stroke-width="2"`;
+  return `<svg viewBox="0 0 100 100" aria-hidden="true"><g ${style}>${SHAPES[key].d}</g></svg>`;
+}
+
+function say(text){
+  try{
+    if(!("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang==="ru" ? "ru-RU" : "en-US";
+    const v = speechSynthesis.getVoices().find(v=>v.lang && v.lang.toLowerCase().startsWith(lang));
+    if (v) u.voice = v;
+    u.rate = 0.85; u.pitch = 1.2;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = ()=>speechSynthesis.getVoices(); } catch(e){}
+
+const targetEl = document.getElementById("targetShape");
+const promptEl = document.getElementById("prompt");
+const optionsEl = document.getElementById("options");
+const starsEl = document.getElementById("stars");
+
+let answer = null, solved = false, stars = 0, nextTimer = null;
+const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
+
+function round(){
+  clearTimeout(nextTimer);
+  solved = false;
+  let k; do { k = KEYS[Math.floor(Math.random()*KEYS.length)]; } while (k === answer);
+  answer = k;
+  const others = shuffle(KEYS.filter(x=>x!==k)).slice(0,2);
+  const picks = shuffle([k, ...others]);
+  const cols = shuffle(COLORS);
+  targetEl.innerHTML = svg(k, null, {ghost:true});
+  promptEl.textContent = T[lang].prompt;
+  optionsEl.innerHTML = "";
+  picks.forEach((key,i)=>{
+    const b = document.createElement("button");
+    const color = `var(${cols[i]})`;
+    b.innerHTML = svg(key, color);
+    b.setAttribute("aria-label", SHAPES[key][lang]);
+    b.addEventListener("click", ()=>pick(key, color, b));
+    optionsEl.appendChild(b);
+  });
+  say(T[lang].find);
+}
+
+function pick(key, color, btn){
+  if (solved) return;
+  const name = SHAPES[key][lang];
+  if (key === answer){
+    solved = true;
+    targetEl.innerHTML = svg(key, color);
+    const s = targetEl.querySelector("svg"); s.classList.add("pop");
+    btn.classList.add("gone");
+    promptEl.textContent = cap(name) + "!";
+    say(T[lang].yes(name));
+    stars++; renderStars();
+    confetti(60);
+    nextTimer = stars % 5 === 0 ? setTimeout(showChest, 1800) : setTimeout(round, 2200);
+  } else {
+    btn.classList.remove("wrong"); void btn.offsetWidth; btn.classList.add("wrong");
+    say(T[lang].no(name));
+  }
+}
+
+function renderStars(){
+  const n = stars % 10 || (stars ? 10 : 0);
+  starsEl.textContent = "⭐".repeat(n);
+}
+
+const langBtns = document.querySelectorAll("[data-lang]");
+function applyLang(){
+  document.documentElement.lang = lang;
+  langBtns.forEach(b=>b.setAttribute("aria-pressed", b.dataset.lang===lang));
+  document.getElementById("startTitle").textContent = T[lang].title;
+  document.title = T[lang].title;
+  updateTreasureText();
+  if (answer && !solved) promptEl.textContent = T[lang].prompt;
+}
+langBtns.forEach(b=>b.addEventListener("click", ()=>{
+  lang = b.dataset.lang;
+  try { localStorage.setItem("shapes-lang", lang); } catch(e){}
+  applyLang();
+  if (!document.getElementById("start").hidden || !document.getElementById("treasure").hidden) return;
+  if (solved) say(cap(SHAPES[answer][lang]) + "!"); else say(T[lang].find);
+}));
+
+document.getElementById("demo").innerHTML =
+  ["star","heart","triangle"].map((k,i)=>svg(k,`var(${COLORS[i*2]})`)).join("");
+document.getElementById("play").addEventListener("click", ()=>{
+  audio();
+  document.getElementById("start").hidden = true;
+  round();
+});
+
+/* Sound effects (Web Audio) */
+let actx = null, noiseBuffer = null;
+function audio(){
+  try{
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+  }catch(e){ actx = null; }
+  return actx;
+}
+function noise(a){
+  if (!noiseBuffer){
+    noiseBuffer = a.createBuffer(1, Math.floor(a.sampleRate*0.5), a.sampleRate);
+    const d = noiseBuffer.getChannelData(0);
+    for (let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  }
+  return noiseBuffer;
+}
+function ping(t, freq, vol, dur, type="triangle"){
+  const a = actx; if (!a) return;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t+0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur+0.05);
+}
+function rattle(level){
+  const a = audio(); if (!a) return;
+  const t0 = a.currentTime;
+  const hits = 5 + level*4;
+  for (let i=0;i<hits;i++){
+    const t = t0 + i*0.04 + Math.random()*0.02;
+    const src = a.createBufferSource(); src.buffer = noise(a);
+    const f = a.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 500 + Math.random()*2000; f.Q.value = 3;
+    const g = a.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.35 + level*0.15, t+0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+0.07);
+    src.connect(f).connect(g).connect(a.destination);
+    src.start(t, Math.random()*0.3, 0.09);
+    if (Math.random() < 0.6) ping(t+0.01, 2200 + Math.random()*1800, 0.07, 0.14);
+  }
+  // wooden thump
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = "sine";
+  o.frequency.setValueAtTime(160, t0); o.frequency.exponentialRampToValueAtTime(55, t0+0.3);
+  g.gain.setValueAtTime(0.7, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0+0.35);
+  o.connect(g).connect(a.destination); o.start(t0); o.stop(t0+0.4);
+  // rising "almost there" note
+  ping(t0+0.05, [392,494,587][level-1], 0.18, 0.35, "square");
+}
+function fanfare(){
+  const a = audio(); if (!a) return;
+  const t0 = a.currentTime;
+  [523,659,784,1047,1319].forEach((f,i)=>ping(t0+i*0.09, f, 0.22, 0.5, "square"));
+  ping(t0+0.5, 1047, 0.25, 1.0); ping(t0+0.5, 1568, 0.18, 1.0);
+  for (let i=0;i<30;i++) ping(t0+0.3+i*0.045+Math.random()*0.03, 2000+Math.random()*2600, 0.1, 0.18);
+}
+function jingle(){
+  const a = audio(); if (!a) return;
+  const t0 = a.currentTime;
+  for (let i=0;i<8;i++) ping(t0+i*0.05, 2200+Math.random()*2200, 0.1, 0.18);
+}
+
+/* Treasure chest */
+const treasure = document.getElementById("treasure");
+const chestEl = document.getElementById("chest");
+const coinsEl = document.getElementById("coins");
+const dotEls = [...document.querySelectorAll("#dots span")];
+const tTitle = document.getElementById("tTitle");
+const restartBtn = document.getElementById("restart");
+let taps = 0, chestOpen = false;
+
+function updateTreasureText(){
+  tTitle.textContent = chestOpen ? T[lang].treasureTitle : T[lang].chestTitle;
+  restartBtn.textContent = "↻ " + T[lang].restart;
+}
+function showChest(){
+  taps = 0; chestOpen = false;
+  chestEl.classList.remove("open","shaking","peek");
+  coinsEl.innerHTML = "";
+  dotEls.forEach(d=>d.classList.remove("on"));
+  restartBtn.hidden = true;
+  updateTreasureText();
+  treasure.hidden = false;
+  say(T[lang].chestSay);
+}
+function restartAnim(cls){ chestEl.classList.remove(cls); void chestEl.offsetWidth; chestEl.classList.add(cls); }
+
+function coinBurst(n){
+  const w = chestEl.offsetWidth;
+  for (let i=0;i<n;i++){
+    const c = document.createElement("div");
+    c.className = "coin";
+    coinsEl.appendChild(c);
+    const dx = (Math.random()-.5) * w * 1.6;
+    const up = 120 + Math.random()*180;
+    const land = 60 + Math.random()*70;
+    const spin = (Math.random()-.5)*720;
+    c.animate([
+      {transform:"translate(0,0) scale(.3)", opacity:1},
+      {transform:`translate(${dx*0.55}px,${-up}px) scale(1.1) rotate(${spin/2}deg)`, offset:.45},
+      {transform:`translate(${dx}px,${land}px) scale(1) rotate(${spin}deg)`}
+    ], {duration:900+Math.random()*500, delay:i*25, easing:"cubic-bezier(.3,.7,.5,1)", fill:"forwards"});
+  }
+}
+
+chestEl.addEventListener("click", ()=>{
+  if (chestOpen){ jingle(); coinBurst(6); return; }
+  if (taps >= 3) return;
+  taps++;
+  dotEls[taps-1].classList.add("on");
+  chestEl.style.setProperty("--amp", 4 + taps*4);
+  restartAnim("shaking");
+  rattle(taps);
+  if (taps < 3){
+    restartAnim("peek");
+    say(T[lang].count[taps-1]);
+  } else {
+    try { speechSynthesis.cancel(); } catch(e){}
+    setTimeout(openChest, 500);
+  }
+});
+
+function openChest(){
+  chestOpen = true;
+  chestEl.classList.remove("peek","shaking");
+  chestEl.classList.add("open");
+  updateTreasureText();
+  fanfare();
+  coinBurst(28);
+  confetti(160);
+  setTimeout(()=>say(T[lang].treasure), 700);
+  setTimeout(()=>{ restartBtn.hidden = false; }, 1500);
+}
+
+restartBtn.addEventListener("click", ()=>{
+  treasure.hidden = true;
+  stars = 0; renderStars();
+  round();
+});
+
+/* Block pinch and double-tap zoom (iOS Safari ignores user-scalable=no) */
+["gesturestart","gesturechange","gestureend"].forEach(ev=>
+  document.addEventListener(ev, e=>e.preventDefault(), {passive:false}));
+document.addEventListener("touchmove", e=>{ if (e.touches.length > 1) e.preventDefault(); }, {passive:false});
+let lastTouch = 0;
+document.addEventListener("touchend", e=>{
+  const now = Date.now();
+  if (now - lastTouch < 300 && !e.target.closest("button")) e.preventDefault();
+  lastTouch = now;
+}, {passive:false});
+
+/* Confetti */
+const cv = document.getElementById("confetti"), ctx = cv.getContext("2d");
+let parts = [], raf = null;
+function confetti(n){
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  cv.width = innerWidth; cv.height = innerHeight;
+  const cs = getComputedStyle(document.documentElement);
+  const colors = COLORS.map(v=>cs.getPropertyValue(v).trim());
+  for (let i=0;i<n;i++) parts.push({
+    x:Math.random()*cv.width, y:-20-Math.random()*cv.height*0.4,
+    vx:(Math.random()-.5)*3, vy:2+Math.random()*4, s:6+Math.random()*8,
+    r:Math.random()*6, vr:(Math.random()-.5)*.3, c:colors[Math.floor(Math.random()*colors.length)]
+  });
+  if (!raf) tick();
+}
+function tick(){
+  ctx.clearRect(0,0,cv.width,cv.height);
+  parts = parts.filter(p=>p.y < cv.height+20);
+  parts.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy; p.r+=p.vr;
+    ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r);
+    ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2); ctx.restore();
+  });
+  raf = parts.length ? requestAnimationFrame(tick) : null;
+}
+
+applyLang();
+</script>
+</body>
+</html>
