@@ -203,6 +203,7 @@ button:focus-visible{outline:4px solid var(--c4); outline-offset:3px}
 </div>
 <canvas id="confetti"></canvas>
 
+<script src="random.js"></script>
 <script>
 const COLORS = ["--c1","--c2","--c3","--c4","--c5","--c6"];
 // ru4: the Russian word after "Найди" (accusative case)
@@ -406,7 +407,7 @@ let taps = 0, chestOpen = false;
 
 function updateTreasureText(){
   tTitle.textContent = chestOpen ? T[lang].treasureTitle : T[lang].chestTitle;
-  restartBtn.textContent = "↻ " + T[lang].restart;
+  restartBtn.textContent = RANDOM ? "🔀 " + NEXT_GAME[lang] : "↻ " + T[lang].restart;
 }
 function showChest(){
   taps = 0; chestOpen = false;
@@ -468,6 +469,7 @@ function openChest(){
 }
 
 restartBtn.addEventListener("click", ()=>{
+  if (RANDOM) return nextGame(lang);
   treasure.hidden = true;
   stars = 0; renderStars();
   round();
