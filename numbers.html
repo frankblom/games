@@ -39,12 +39,6 @@ main{
   max-width:640px; margin:0 auto; min-height:100%;
   display:flex; flex-direction:column; gap:14px; padding:14px 14px 18px;
 }
-.themes{display:flex; justify-content:center; gap:8px; flex-wrap:wrap}
-.themes button{
-  font-size:26px; width:52px; height:52px; border-radius:50%;
-  border:3px solid transparent; background:var(--panel); cursor:pointer; line-height:1;
-}
-.themes button[aria-pressed="true"]{border-color:var(--ink)}
 .display{text-align:center; line-height:.9}
 #num{
   font-size:clamp(110px,32vw,190px); font-weight:800; display:inline-block;
@@ -133,7 +127,6 @@ button:focus-visible{outline:4px solid var(--r4); outline-offset:3px}
       <button data-lang="ru" aria-pressed="false">Русский</button>
     </div>
   </div>
-  <div class="themes" id="themes" aria-label="Pick what to count"></div>
   <div class="display">
     <div id="num" aria-live="polite">0</div>
     <div id="word">Tap to start counting</div>
@@ -160,7 +153,6 @@ button:focus-visible{outline:4px solid var(--r4); outline-offset:3px}
 <canvas id="confetti"></canvas>
 
 <script>
-const THEMES = ["🍎","🐶","⭐","🚚","🦆","🐟"];
 const ROWCOLORS = ["--r1","--r2","--r3","--r4","--r5"];
 const ones = ["zero","one","two","three","four","five","six","seven","eight","nine","ten",
   "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
@@ -186,8 +178,6 @@ function words(n){
 }
 
 let count = 0;
-let theme = "🍎";
-try { const s = localStorage.getItem("count50-theme"); if (s && THEMES.includes(s)) theme = s; } catch(e){}
 
 const board = document.getElementById("board");
 const numEl = document.getElementById("num");
@@ -205,15 +195,6 @@ for (let r=0; r<5; r++){
   }
   board.appendChild(row); rows.push(row);
 }
-
-const themesEl = document.getElementById("themes");
-THEMES.forEach(t=>{
-  const b = document.createElement("button");
-  b.textContent = t;
-  b.setAttribute("aria-label","Count "+t);
-  b.onclick = ()=>{ theme=t; try{localStorage.setItem("count50-theme",t)}catch(e){}; render(false); };
-  themesEl.appendChild(b);
-});
 
 function say(text){
   try{
@@ -236,9 +217,7 @@ function render(animateLast){
       if (!animateLast || i !== count-1) cell.style.animation = "none"; else cell.style.animation = "";
     }
     if (!on) cell.classList.remove("on");
-    cell.textContent = on ? theme : "";
   });
-  [...themesEl.children].forEach(b=>b.setAttribute("aria-pressed", b.textContent===theme));
   if (mode === "guess" && !solved){
     numEl.textContent = answer;
     numEl.style.color = `var(${ROWCOLORS[Math.ceil(answer/10)-1]})`;
