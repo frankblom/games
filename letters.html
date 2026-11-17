@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Letters</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -32,7 +32,7 @@ body{
   touch-action:manipulation; overflow-x:hidden;
 }
 main{
-  max-width:640px; margin:0 auto; min-height:100%;
+  max-width:640px; margin:0 auto; height:100%;
   display:flex; flex-direction:column; gap:14px; padding:14px 14px 18px;
 }
 .top{display:flex; justify-content:center; gap:10px; flex-wrap:wrap}
@@ -46,40 +46,36 @@ main{
 /* Cyrillic falls back to a font whose tall glyph box would cover the language buttons. */
 .display{text-align:center; line-height:.9; pointer-events:none}
 #letter{
-  font-size:clamp(110px,32vw,190px); font-weight:800; display:inline-block;
+  font-size:clamp(48px,min(32vw,22dvh),190px); font-weight:800; display:inline-block;
   color:var(--ink); transition:color .2s;
 }
 #letter.pop{animation:pop .35s ease-out}
 @keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
 #word{font-size:26px; font-weight:700; color:var(--soft); min-height:36px; margin-top:4px}
+.boardWrap{flex:1; min-height:0; container-type:size; display:flex; align-items:center; justify-content:center}
 .board{
+  width:min(100%,calc(100cqh * var(--ratio))); container-type:inline-size;
   background:var(--panel); border-radius:22px; padding:10px;
   display:flex; flex-direction:column; gap:6px; cursor:pointer;
 }
-.row{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; border-radius:12px; padding:2px}
+.row{display:grid; grid-template-columns:repeat(7,1fr); gap:min(6px,1.5cqw); border-radius:12px; padding:2px}
 .row.flash{animation:flash .9s ease-out}
 @keyframes flash{0%,100%{background:transparent}30%{background:var(--rc)}}
 .cell{
   aspect-ratio:1; border-radius:50%; background:var(--empty); color:var(--soft);
   display:flex; align-items:center; justify-content:center;
-  font-size:clamp(20px,6.5vw,38px); font-weight:800; line-height:1;
+  font-size:7cqw; font-weight:800; line-height:1;
 }
 .cell span{opacity:.35}
 .cell.on{background:var(--rc); color:#fff; animation:drop .3s ease-out}
 .cell.on span{opacity:1}
 @keyframes drop{0%{transform:scale(0)}70%{transform:scale(1.25)}100%{transform:scale(1)}}
 #go{
-  font-family:inherit; font-size:clamp(44px,12vw,60px); font-weight:800;
+  font-family:inherit; font-size:clamp(32px,min(12vw,7dvh),60px); font-weight:800;
   background:var(--btn); color:var(--btnInk); border:none; border-radius:999px;
-  padding:36px 20px; cursor:pointer; box-shadow:0 8px 0 var(--r5);
+  padding:clamp(12px,4dvh,36px) 20px; cursor:pointer; box-shadow:0 8px 0 var(--r5);
 }
 #go:active{transform:translateY(4px); box-shadow:0 2px 0 var(--r5)}
-.small{display:flex; justify-content:space-between; gap:10px}
-.small button{
-  font-family:inherit; font-size:18px; font-weight:600; flex:1;
-  background:transparent; color:var(--soft); border:2px solid var(--empty);
-  border-radius:999px; padding:10px; cursor:pointer;
-}
 button:focus-visible{outline:4px solid var(--r4); outline-offset:3px}
 #win{
   position:fixed; inset:0; display:none; align-items:center; justify-content:center;
@@ -109,12 +105,8 @@ button:focus-visible{outline:4px solid var(--r4); outline-offset:3px}
     <div id="letter" aria-live="polite"></div>
     <div id="word"></div>
   </div>
-  <div class="board" id="board" aria-label="Alphabet board, tap for the next letter"></div>
+  <div class="boardWrap"><div class="board" id="board" aria-label="Alphabet board, tap for the next letter"></div></div>
   <button id="go" data-t="go">Next letter</button>
-  <div class="small">
-    <button id="back" data-t="back">Go back</button>
-    <button id="reset" data-t="reset">Start over</button>
-  </div>
 </main>
 
 <div id="win" role="dialog" aria-modal="true" aria-labelledby="winTitle">
@@ -150,9 +142,9 @@ const ALPHABETS = {
   ]
 };
 const T = {
-  en:{go:"Next letter",back:"Go back",reset:"Start over",tapStart:"Tap to start the ABCs",
+  en:{go:"Next letter",tapStart:"Tap to start the ABCs",
       winTitle:"A to Z!",winText:"You know the whole alphabet!",again:"Play again",done:"A to Z! You did it!"},
-  ru:{go:"Дальше",back:"Назад",reset:"Сначала",tapStart:"Нажми, чтобы начать",
+  ru:{go:"Дальше",tapStart:"Нажми, чтобы начать",
       winTitle:"От А до Я!",winText:"Ты знаешь весь алфавит!",again:"Ещё раз",done:"От А до Я! Молодец!"}
 };
 let lang = "en";
@@ -168,6 +160,7 @@ let cells = [], rows = [];
 function buildBoard(){
   letters = ALPHABETS[lang];
   board.textContent = ""; cells = []; rows = [];
+  board.style.setProperty("--ratio", PER_ROW / Math.ceil(letters.length / PER_ROW) * 0.82);
   for (let r = 0; r * PER_ROW < letters.length; r++){
     const row = document.createElement("div");
     row.className = "row";
@@ -248,9 +241,9 @@ function reset(){
 
 board.addEventListener("click", add);
 document.getElementById("go").addEventListener("click", add);
-document.getElementById("back").addEventListener("click", back);
-document.getElementById("reset").addEventListener("click", reset);
 document.getElementById("again").addEventListener("click", reset);
+// iOS Safari ignores user-scalable=no, so block pinch zoom directly.
+document.addEventListener("gesturestart", e=>e.preventDefault());
 document.addEventListener("keydown", e=>{
   if (e.target.tagName === "BUTTON") return;
   if (e.key===" "||e.key==="Enter"||e.key==="ArrowRight"){ e.preventDefault(); add(); }

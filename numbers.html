@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Count to 50</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,22 +36,25 @@ body{
   touch-action:manipulation; overflow-x:hidden;
 }
 main{
-  max-width:640px; margin:0 auto; min-height:100%;
+  max-width:640px; margin:0 auto; height:100%;
   display:flex; flex-direction:column; gap:14px; padding:14px 14px 18px;
 }
 .display{text-align:center; line-height:.9}
 #num{
-  font-size:clamp(110px,32vw,190px); font-weight:800; display:inline-block;
+  font-size:clamp(48px,min(32vw,22dvh),190px); font-weight:800; display:inline-block;
   color:var(--ink); transition:color .2s;
 }
 #num.pop{animation:pop .35s ease-out}
 @keyframes pop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
 #word{font-size:22px; font-weight:600; color:var(--soft); min-height:30px; margin-top:4px}
+.boardWrap{flex:1; min-height:0; container-type:size; display:flex; align-items:center; justify-content:center}
 .board{
+  --ratio:1.64;
+  width:min(100%,calc(100cqh * var(--ratio))); container-type:inline-size;
   background:var(--panel); border-radius:22px; padding:10px;
   display:grid; grid-template-rows:repeat(5,1fr); gap:6px; cursor:pointer;
 }
-.row{display:grid; grid-template-columns:repeat(10,1fr); gap:4px; border-radius:12px; padding:2px}
+.row{display:grid; grid-template-columns:repeat(10,1fr); gap:min(4px,1cqw); border-radius:12px; padding:2px}
 .row.flash{animation:flash .9s ease-out}
 @keyframes flash{0%,100%{background:transparent}30%{background:var(--rc)}}
 .cell{
@@ -67,15 +70,9 @@ main{
   padding:18px 20px; cursor:pointer; box-shadow:0 6px 0 var(--r5);
 }
 #go:active,#hear:active{transform:translateY(4px); box-shadow:0 2px 0 var(--r5)}
-.small{display:flex; justify-content:space-between; gap:10px}
-.small button{
-  font-family:inherit; font-size:18px; font-weight:600; flex:1;
-  background:transparent; color:var(--soft); border:2px solid var(--empty);
-  border-radius:999px; padding:10px; cursor:pointer;
-}
 button:focus-visible{outline:4px solid var(--r4); outline-offset:3px}
 [hidden]{display:none!important}
-#go{font-size:clamp(44px,12vw,60px); padding:36px 20px; box-shadow:0 8px 0 var(--r5)}
+#go{font-size:clamp(32px,min(12vw,7dvh),60px); padding:clamp(12px,4dvh,36px) 20px; box-shadow:0 8px 0 var(--r5)}
 .top{display:flex; justify-content:center; gap:10px; flex-wrap:wrap}
 #countCtrls,#guessCtrls{display:flex; flex-direction:column; gap:14px}
 .mode{display:flex; gap:6px; background:var(--panel); border-radius:999px; padding:5px; align-self:center}
@@ -131,13 +128,9 @@ button:focus-visible{outline:4px solid var(--r4); outline-offset:3px}
     <div id="num" aria-live="polite">0</div>
     <div id="word">Tap to start counting</div>
   </div>
-  <div class="board" id="board" aria-label="Counting board, tap to add one"></div>
+  <div class="boardWrap"><div class="board" id="board" aria-label="Counting board, tap to add one"></div></div>
   <div id="countCtrls">
     <button id="go" data-t="go">Count one more</button>
-    <div class="small">
-      <button id="back" data-t="back">Take one away</button>
-      <button id="reset" data-t="reset">Start over</button>
-    </div>
   </div>
   <div id="guessCtrls" hidden>
     <button id="hear" data-t="hear">Hear it</button>
@@ -161,10 +154,10 @@ const onesRu = ["ноль","один","два","три","четыре","пять
   "одиннадцать","двенадцать","тринадцать","четырнадцать","пятнадцать","шестнадцать","семнадцать","восемнадцать","девятнадцать"];
 const tensRu = ["","","двадцать","тридцать","сорок","пятьдесят"];
 const T = {
-  en:{count:"Count",guess:"Guess",go:"Count one more",back:"Take one away",reset:"Start over",
+  en:{count:"Count",guess:"Guess",go:"Count one more",
       hear:"Hear it",next:"Next number",winTitle:"Fifty!",winText:"You counted all the way to 50.",
       again:"Count again",tapStart:"Tap to start counting",sayIt:"Can you say this number?",done:"Fifty! You did it!"},
-  ru:{count:"Считать",guess:"Назови",go:"Ещё один",back:"Убрать один",reset:"Сначала",
+  ru:{count:"Считать",guess:"Назови",go:"Ещё один",
       hear:"Послушать",next:"Следующее число",winTitle:"Пятьдесят!",winText:"Ты досчитал до 50!",
       again:"Ещё раз",tapStart:"Нажми, чтобы считать",sayIt:"Как называется это число?",done:"Пятьдесят! Молодец!"}
 };
@@ -256,9 +249,9 @@ function reset(){
 
 board.addEventListener("click", add);
 document.getElementById("go").addEventListener("click", add);
-document.getElementById("back").addEventListener("click", back);
-document.getElementById("reset").addEventListener("click", reset);
 document.getElementById("again").addEventListener("click", reset);
+// iOS Safari ignores user-scalable=no, so block pinch zoom directly.
+document.addEventListener("gesturestart", e=>e.preventDefault());
 document.addEventListener("keydown", e=>{
   if (e.target.tagName === "BUTTON") return;
   if (e.key===" "||e.key==="Enter"||e.key==="ArrowRight"){ e.preventDefault(); add(); }
